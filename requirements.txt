@@ -1,0 +1,4 @@
+b2sdk>=2,<3
+Flask>=3,<4
+pytest
+python-dotenv
