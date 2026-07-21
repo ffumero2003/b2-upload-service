@@ -40,6 +40,29 @@ def _client(uploader):
     return create_app(uploader).test_client()
 
 
+def test_index_served_as_html():
+    """GET / returns the upload page as HTML without touching the uploader."""
+    fake = FakeUploader()
+    client = _client(fake)
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "text/html" in response.headers["Content-Type"]
+    assert fake.calls == []
+
+
+def test_index_wires_upload_endpoint():
+    """The page contains the markers the frontend depends on to reach /upload."""
+    client = _client(FakeUploader())
+
+    body = client.get("/").get_data(as_text=True)
+
+    assert 'type="file"' in body
+    assert "/upload" in body
+    assert "url" in body
+
+
 def test_upload_success_returns_json():
     """A posted file returns 200 with the uploader's result and passes bytes through."""
     fake = FakeUploader()

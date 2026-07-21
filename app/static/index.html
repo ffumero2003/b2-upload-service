@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B2 File Uploader</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 34rem;
+      margin: 3rem auto;
+      padding: 0 1rem;
+      color: #1a1a1a;
+    }
+    h1 { font-size: 1.4rem; }
+    form { display: flex; gap: 0.5rem; align-items: center; margin: 1.5rem 0; }
+    button {
+      padding: 0.4rem 1rem;
+      border: 0;
+      border-radius: 4px;
+      background: #2563eb;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:disabled { background: #9ca3af; cursor: default; }
+    #result { margin-top: 1rem; word-break: break-all; }
+    #result.error { color: #b91c1c; }
+    #result a { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <h1>Upload a file to Backblaze B2</h1>
+
+  <form id="upload-form">
+    <input type="file" name="file" id="file">
+    <button type="submit" id="submit">Upload</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    // Wire the file picker to the existing POST /upload endpoint and render its
+    // result. Change this when the /upload contract (field name or the
+    // fileName/fileId/url response keys) changes. No upload logic lives here; the
+    // server owns validation and storage.
+    const form = document.getElementById("upload-form");
+    const fileInput = document.getElementById("file");
+    const submit = document.getElementById("submit");
+    const result = document.getElementById("result");
+
+    // Print a message, styling it as an error when isError is true.
+    function show(message, isError) {
+      result.classList.toggle("error", Boolean(isError));
+      result.textContent = message;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const file = fileInput.files[0];
+      if (!file) {
+        show("Choose a file first.", true);
+        return;
+      }
+
+      const data = new FormData();
+      data.append("file", file);
+
+      submit.disabled = true;
+      try {
+        const response = await fetch("/upload", { method: "POST", body: data });
+        const body = await response.json();
+
+        if (response.ok) {
+          result.classList.remove("error");
+          result.innerHTML = "";
+          const label = document.createElement("div");
+          label.textContent = "Uploaded " + body.fileName;
+          const link = document.createElement("a");
+          link.href = body.url;
+          link.textContent = body.url;
+          result.appendChild(label);
+          result.appendChild(link);
+        } else {
+          show(body.error || "Upload failed", true);
+        }
+      } catch (err) {
+        show("Upload failed", true);
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

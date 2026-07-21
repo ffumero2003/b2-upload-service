@@ -16,6 +16,16 @@ def create_app(uploader):
     """
     app = Flask(__name__)
 
+    @app.get("/")
+    def index():
+        """Serve the single-page uploader UI.
+
+        Change this when the frontend entry point moves or needs server-rendered
+        data. Serves the static page so a browser has something to POST /upload
+        from; adds no upload logic of its own.
+        """
+        return app.send_static_file("index.html")
+
     @app.post("/upload")
     def upload():
         """Store the posted file in B2 and return its name, id, and URL.
